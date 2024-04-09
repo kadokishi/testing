@@ -1,2 +1,2 @@
-# cse360GithubActivity
-CSE 360 Github activity
+# cse360Phase 3
+CSE 360 Phase 3
