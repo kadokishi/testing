@@ -255,26 +255,9 @@ private void showPatientView(String patientID) {
     patientStage.show();
 }
 
-    private void showDoctorView() {
-    	Stage doctorStage = new Stage();
-    	doctorStage.setTitle("Doctor Dashboard");
-    	Label doctorLabel = new Label("Doctor's View");
-    	VBox layout = new VBox(10, doctorLabel);
-    	Scene scene = new Scene(layout, 400, 500);
-    	doctorStage.setScene(scene);
-    	doctorStage.show();
-    }
+
     
-    
-    private void showNurseView() {
-    	Stage nurseStage = new Stage();
-    	nurseStage.setTitle("Nurse Dashboard");
-    	Label nurseLabel = new Label("Nurse's View");
-    	VBox layout = new VBox(10, nurseLabel);
-    	Scene scene = new Scene(layout, 400, 500);
-    	nurseStage.setScene(scene);
-    	nurseStage.show();
-    }
+
     
     private void showPatientIntakeStage() {
         Stage intakeStage = new Stage();
