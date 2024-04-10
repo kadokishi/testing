@@ -1,5 +1,14 @@
 # ClearHealth System README
 
+## Team Members
+
+- Rajlaxmi Bahirat
+- Benjamin Cohen
+- Kado Kishimoto
+- Carolina Milan Martinez
+- Noam Yakar
+
+
 ## Overview
 This document outlines the core classes and functionalities of the ClearHealth application, designed to facilitate patient intake, CT scan processing, and patient result viewing.
 
