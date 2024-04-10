@@ -25,6 +25,7 @@ import java.util.HashMap;
 import javafx.scene.text.FontWeight;
 import java.util.Map;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import javafx.application.Application;
 import javafx.scene.Scene;
@@ -50,8 +51,11 @@ import javafx.scene.layout.GridPane;
 
 public class homeworkOne extends Application {
 
+	private String patientID = "defaultPatientID";
     @Override
     public void start(Stage primaryStage) {
+    	
+    	
     	
     	// Welcome message
         Label lblWelcome = new Label("Welcome to Heart Health Imaging and Recording System");
@@ -71,7 +75,7 @@ public class homeworkOne extends Application {
         // Event Handlers for buttons to navigate to different scenes
         btnPatientIntake.setOnAction(e -> showPatientIntakeStage());
         btnCTScanTechView.setOnAction(e -> showCTScanTechView());
-        btnPatientView.setOnAction(e -> showPatientView());
+        btnPatientView.setOnAction(e -> showPatientView(patientID));
 
         // Layout for Main Scene with alignment and spacing
         VBox layoutMain = new VBox(10); // 10 is the spacing between elements
@@ -80,6 +84,10 @@ public class homeworkOne extends Application {
         layoutMain.getChildren().addAll(lblWelcome, btnPatientIntake, btnCTScanTechView, btnPatientView);
 
         Scene mainScene = new Scene(layoutMain, 400, 300); // Adjust the size as needed
+        primaryStage.setTitle("Heart Health Imaging and Recording System");
+        String examplePatientID = "12345";
+        showPatientView(examplePatientID);
+
         primaryStage.setTitle("Heart Health Imaging and Recording System");
         primaryStage.setScene(mainScene);
         showLoginScreen(primaryStage);
@@ -95,7 +103,158 @@ public class homeworkOne extends Application {
         stage.show();
     }
     
-    
+    private void showPatientProfile(String patientID) {
+        Stage profileStage = new Stage();
+        profileStage.setTitle("Patient Profile");
+
+        GridPane gridPane = new GridPane();
+        gridPane.setAlignment(Pos.CENTER);
+        gridPane.setPadding(new Insets(10));
+        gridPane.setVgap(10);
+        gridPane.setHgap(10);
+
+        // Retrieve patient data from file
+        Map<String, String> patientData = getPatientData(patientID);
+
+        // Create form elements populated with existing patient data
+        TextField txtFirstName = new TextField(patientData.getOrDefault("First Name", ""));
+        TextField txtLastName = new TextField(patientData.getOrDefault("Last Name", ""));
+        TextField txtEmail = new TextField(patientData.getOrDefault("Email", ""));
+        TextField txtPhoneNumber = new TextField(patientData.getOrDefault("Phone Number", ""));
+        TextArea txtHealthHistory = new TextArea(patientData.getOrDefault("Health History", ""));
+        TextField txtInsuranceID = new TextField(patientData.getOrDefault("Insurance ID", ""));
+
+        // Add form elements to the gridPane
+        gridPane.addRow(0, new Label("First Name:"), txtFirstName);
+        gridPane.addRow(1, new Label("Last Name:"), txtLastName);
+        gridPane.addRow(2, new Label("Email:"), txtEmail);
+        gridPane.addRow(3, new Label("Phone Number:"), txtPhoneNumber);
+        gridPane.addRow(4, new Label("Health History:"), txtHealthHistory);
+        gridPane.addRow(5, new Label("Insurance ID:"), txtInsuranceID);
+
+        Button btnSave = new Button("Save");
+        btnSave.setOnAction(e -> savePatientInfo(
+                patientID, txtFirstName.getText(), txtLastName.getText(),
+                txtEmail.getText(), txtPhoneNumber.getText(),
+                txtHealthHistory.getText(), txtInsuranceID.getText()
+        ));
+        gridPane.add(btnSave, 1, 6);
+
+        Scene profileScene = new Scene(gridPane, 400, 450);
+        profileStage.setScene(profileScene);
+        profileStage.show();
+    }
+    private Map<String, String> getPatientData(String patientID) {
+        Map<String, String> data = new HashMap<>();
+        String directoryName = "patient_data";
+        String fileName = patientID + "_PatientInfo.txt";
+        Path filePath = Paths.get(directoryName, fileName);
+
+        if (Files.exists(filePath)) {
+            try {
+                List<String> lines = Files.readAllLines(filePath);
+                for (String line : lines) {
+                    String[] parts = line.split(":");
+                    if (parts.length == 2) {
+                        data.put(parts[0].trim(), parts[1].trim());
+                    }
+                }
+            } catch (IOException ex) {
+                showAlert(Alert.AlertType.ERROR, "Error", "Failed to read patient information.");
+            }
+        }
+        return data;
+    }
+
+    private void savePatientInfo(String patientID, String firstName, String lastName, String email, String phone, String healthHistory, String insuranceID) {
+        String directoryName = "patient_data";
+        String fileName = patientID + "_PatientInfo.txt";
+        String filePath = Paths.get(directoryName, fileName).toString();
+
+        String content = String.format(
+                "Patient ID: %s\nFirst Name: %s\nLast Name: %s\nEmail: %s\nPhone Number: %s\nHealth History: %s\nInsurance ID: %s",
+                patientID, firstName, lastName, email, phone, healthHistory, insuranceID
+        );
+
+        try {
+            Files.write(Paths.get(filePath), content.getBytes());
+            showAlert(Alert.AlertType.INFORMATION, "Information Updated", "Patient information has been updated successfully.");
+        } catch (IOException ex) {
+            showAlert(Alert.AlertType.ERROR, "Error Updating Information", "Failed to update patient information.");
+        }
+    }
+    private void showUpcomingAppointments(String username) {
+        Stage appointmentsStage = new Stage();
+        appointmentsStage.setTitle("Upcoming Appointments");
+
+        VBox layout = new VBox(10);
+        layout.setAlignment(Pos.CENTER);
+        layout.setPadding(new Insets(10));
+
+        String directoryName = "patient_data";
+        String patientID = getPatientIDByUsername(username);
+        String fileName = patientID + "_Appointments.txt";
+        Path filePath = Paths.get(directoryName, fileName);
+
+        try {
+            if (Files.exists(filePath)) {
+                List<String> lines = Files.readAllLines(filePath);
+                for (String line : lines) {
+                    layout.getChildren().add(new Label(line));
+                }
+            } else {
+                layout.getChildren().add(new Label("No upcoming appointments."));
+            }
+        } catch (IOException ex) {
+            showAlert(Alert.AlertType.ERROR, "Error", "Failed to load appointments.");
+        }
+
+        Scene appointmentsScene = new Scene(layout, 300, 200);
+        appointmentsStage.setScene(appointmentsScene);
+        appointmentsStage.show();
+    }
+
+    private String getPatientIDByUsername(String username) {
+        String directoryName = "user_data";
+        String fileName = "users.txt";
+        File userFile = new File(directoryName, fileName);
+
+        try (BufferedReader reader = new BufferedReader(new FileReader(userFile))) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                String[] userData = line.split(",");
+                if (userData[0].equals(username) && userData[2].equals("Patient")) {
+                    // Return the patient ID if username matches and the role is Patient
+                    return userData[3];
+                }
+            }
+        } catch (IOException e) {
+            System.out.println("Error checking username: " + e.getMessage());
+        }
+
+        // Return empty string if username is not found or if an error occurs
+        return "";
+    }
+
+
+
+private void showPatientView(String patientID) {
+    Stage patientStage = new Stage();
+    patientStage.setTitle("Patient View");
+
+    Button btnUpdateProfile = new Button("Update Profile");
+    btnUpdateProfile.setOnAction(e -> showPatientProfile(patientID));
+
+    Button btnViewAppointments = new Button("View Appointments");
+    btnViewAppointments.setOnAction(e -> showUpcomingAppointments(patientID));
+
+    VBox layout = new VBox(10, btnUpdateProfile, btnViewAppointments);
+    layout.setAlignment(Pos.CENTER);
+    Scene scene = new Scene(layout, 300, 200);
+    patientStage.setScene(scene);
+    patientStage.show();
+}
+
     private void showDoctorView() {
     	Stage doctorStage = new Stage();
     	doctorStage.setTitle("Doctor Dashboard");
@@ -214,7 +373,7 @@ public class homeworkOne extends Application {
 
 
     
-    private void writeUserToFile(String username, String password, String role) {
+    private void writeUserToFile(String username, String password, String role, String patientID) {
         String directoryName = "user_data";
         String fileName = "users.txt";
 
@@ -228,12 +387,14 @@ public class homeworkOne extends Application {
              BufferedWriter bw = new BufferedWriter(fw);
              PrintWriter out = new PrintWriter(bw)) {
 
-            out.println(username + "," + password + "," + role);
+            // Write username, password, role, and patient ID to the file
+            out.println(username + "," + password + "," + role + "," + patientID);
 
         } catch (IOException e) {
             System.out.println("An error occurred while writing to the user file: " + e.getMessage());
         }
     }
+
 
  
     private void showCTScanTechView() {
@@ -341,68 +502,7 @@ private void saveCTScanData(String patientID, String totalCACScore, String lm, S
         }
         return ""; // Return empty if name is not found or if there's an error
     }  
-    private void showPatientView() {
-        Stage patientStage = new Stage();
-        patientStage.setTitle("Patient View (Seeing the Results)");
-
-        GridPane gridPane = new GridPane();
-        gridPane.setAlignment(Pos.CENTER);
-        gridPane.setPadding(new Insets(10));
-        gridPane.setVgap(10);
-        gridPane.setHgap(10);
-
-        // A field for the patient to enter their ID
-        TextField txtPatientID = new TextField();
-        gridPane.add(new Label("Patient ID:"), 0, 0);
-        gridPane.add(txtPatientID, 1, 0);
-
-        // Non-editable fields to display the results
-        TextField txtTotalCACScore = new TextField();
-        TextField txtLM = new TextField();
-        TextField txtLAD = new TextField();
-        TextField txtLCX = new TextField();
-        TextField txtRCA = new TextField();
-        TextField txtPDA = new TextField();
-
-        // Set text fields to be non-editable
-        txtTotalCACScore.setEditable(false);
-        txtLM.setEditable(false);
-        txtLAD.setEditable(false);
-        txtLCX.setEditable(false);
-        txtRCA.setEditable(false);
-        txtPDA.setEditable(false);
-
-        // Add non-editable fields to the gridPane
-        gridPane.addRow(1, new Label("The total Agatston CAC score:"), txtTotalCACScore);
-        gridPane.addRow(2, new Label("LM:"), txtLM);
-        gridPane.addRow(3, new Label("LAD:"), txtLAD);
-        gridPane.addRow(4, new Label("LCX:"), txtLCX);
-        gridPane.addRow(5, new Label("RCA:"), txtRCA);
-        gridPane.addRow(6, new Label("PDA:"), txtPDA);
-
-        Button btnViewResults = new Button("View Results");
-        btnViewResults.setOnAction(e -> {
-            String patientID = txtPatientID.getText();
-            if (!patientID.isEmpty()) {
-                String patientName = getPatientName(patientID); // Retrieve patient's name using the ID
-                if (!patientName.isEmpty()) {
-                    showAlert(Alert.AlertType.INFORMATION, "Hello", "Hello " + patientName); // Greet the patient by name
-                    // Now load and display the CT scan data
-                    loadAndDisplayCTScanData(patientID, txtTotalCACScore, txtLM, txtLAD, txtLCX, txtRCA, txtPDA);
-                } else {
-                    showAlert(Alert.AlertType.ERROR, "Error", "No such patient ID found.");
-                }
-            } else {
-                showAlert(Alert.AlertType.ERROR, "Error", "Please enter a Patient ID.");
-            }
-        });
-
-        gridPane.add(btnViewResults, 1, 7);
-
-        Scene patientScene = new Scene(gridPane, 400, 450);
-        patientStage.setScene(patientScene);
-        patientStage.show();
-    }
+ 
 
 private void loadAndDisplayCTScanData(String patientID, TextField txtTotalCACScore, TextField txtLM, TextField txtLAD, TextField txtLCX, TextField txtRCA, TextField txtPDA) {
     String directoryName = "patient_data";
@@ -499,12 +599,34 @@ private void showSignUpScreen() {
 private void signUpPatient(String username, String password, Stage signUpStage) {
     if (usernameExists(username)) {
         showAlert(Alert.AlertType.ERROR, "Error", "Username already exists.");
-        return;
+    } else {
+        // New user, so generate patient ID, write user to file, etc.
+        String newPatientID = generatePatientID();
+        writeUserToFile(username, password, "Patient", newPatientID); // Pass the generated patient ID
+        addDefaultAppointments(newPatientID); // Call addDefaultAppointments here
+        showAlert(Alert.AlertType.INFORMATION, "Sign Up Successful", "Patient account created successfully. Default appointments added.");
+        signUpStage.close();
     }
-    
-    writeUserToFile(username, password, "Patient");
-    showAlert(Alert.AlertType.INFORMATION, "Sign Up Successful", "Patient account created successfully.");
-    signUpStage.close(); 
+}
+
+
+private void addDefaultAppointments(String patientID) {
+    String directoryName = "patient_data";
+    String fileName = patientID + "_Appointments.txt";
+    File directory = new File(directoryName);
+    if (!directory.exists()) {
+        directory.mkdirs();
+    }
+    List<String> appointments = Arrays.asList(
+        "Appointment with Dr. Smith on 2024-06-15 at 10:00 AM",
+        "Follow-up on 2024-06-29 at 02:00 PM"
+    );
+    try {
+        Path filePath = Paths.get(directoryName, fileName);
+        Files.write(filePath, appointments);
+    } catch (IOException e) {
+        System.out.println("Error creating default appointments: " + e.getMessage());
+    }
 }
 
 private boolean usernameExists(String username) {
@@ -582,35 +704,22 @@ private int loginAttemptCount = 0;
 private static final int MAX_LOGIN_ATTEMPTS = 3;
 
 private void handleLogin(String role, String username, String password, Stage loginStage, Stage primaryStage) {
-    if (usernameExists(username) && !checkCredentials(username, password, role)) {
-        showAlert(Alert.AlertType.ERROR, "Error", "Invalid password.");
+    if (!usernameExists(username) || !checkCredentials(username, password, role)) {
+        showAlert(Alert.AlertType.ERROR, "Error", "Invalid credentials.");
         handleLoginAttempt(loginStage);
-        return;
-    }
-
-    if (checkCredentials(username, password, role)) {
+    } else {
+        // Successful login
         loginAttemptCount = 0;
         loginStage.close(); // Close the login window
-        switch (role) {
-            case "Doctor":
-                showDoctorView();
-                break;
-            case "Nurse":
-                showNurseView();
-                break;
-            case "Patient":
-                primaryStage.show();
-                break;
-            default:
-                showAlert(Alert.AlertType.ERROR, "Error", "Please select a role.");
-                break;
+        if ("Patient".equals(role)) {
+            // Here we assume patientID is retrieved based on the username, adjust accordingly
+            showPatientView(patientID);
+        } else {
+            // For non-patients, show the main window
+            primaryStage.show();
         }
     }
-        else {
-        	showAlert(Alert.AlertType.ERROR, "Error", "Authentication failed.");
-            handleLoginAttempt(loginStage);
-        }
-   }
+}
 
 private void handleLoginAttempt(Stage loginStage) {
     loginAttemptCount++;
