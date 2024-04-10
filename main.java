@@ -32,8 +32,13 @@ import javafx.scene.control.Button;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 
-
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.Random;
@@ -77,7 +82,7 @@ public class homeworkOne extends Application {
         Scene mainScene = new Scene(layoutMain, 400, 300); // Adjust the size as needed
         primaryStage.setTitle("Heart Health Imaging and Recording System");
         primaryStage.setScene(mainScene);
-        primaryStage.show();
+        showLoginScreen(primaryStage);
     }
 
     private void showBlankStage(String title) {
@@ -90,6 +95,27 @@ public class homeworkOne extends Application {
         stage.show();
     }
     
+    
+    private void showDoctorView() {
+    	Stage doctorStage = new Stage();
+    	doctorStage.setTitle("Doctor Dashboard");
+    	Label doctorLabel = new Label("Doctor's View");
+    	VBox layout = new VBox(10, doctorLabel);
+    	Scene scene = new Scene(layout, 400, 500);
+    	doctorStage.setScene(scene);
+    	doctorStage.show();
+    }
+    
+    
+    private void showNurseView() {
+    	Stage nurseStage = new Stage();
+    	nurseStage.setTitle("Nurse Dashboard");
+    	Label nurseLabel = new Label("Nurse's View");
+    	VBox layout = new VBox(10, nurseLabel);
+    	Scene scene = new Scene(layout, 400, 500);
+    	nurseStage.setScene(scene);
+    	nurseStage.show();
+    }
     
     private void showPatientIntakeStage() {
         Stage intakeStage = new Stage();
@@ -188,7 +214,27 @@ public class homeworkOne extends Application {
 
 
     
-    
+    private void writeUserToFile(String username, String password, String role) {
+        String directoryName = "user_data";
+        String fileName = "users.txt";
+
+        File directory = new File(directoryName);
+        if (!directory.exists()) {
+            directory.mkdirs();
+        }
+
+        File userFile = new File(directory, fileName);
+        try (FileWriter fw = new FileWriter(userFile, true);
+             BufferedWriter bw = new BufferedWriter(fw);
+             PrintWriter out = new PrintWriter(bw)) {
+
+            out.println(username + "," + password + "," + role);
+
+        } catch (IOException e) {
+            System.out.println("An error occurred while writing to the user file: " + e.getMessage());
+        }
+    }
+
  
     private void showCTScanTechView() {
         Stage techStage = new Stage();
@@ -388,11 +434,197 @@ private String getValueAfterColon(String line) {
     return line.split(":\\s*", 2)[1];
 }
 
+
+private void showLoginScreen(Stage primaryStage) {
+    Stage loginStage = new Stage();
+    loginStage.setTitle("Login");
+
+    ComboBox<String> cbRole = new ComboBox<>();
+    cbRole.getItems().addAll("Doctor", "Nurse", "Patient");
+    cbRole.setStyle("-fx-padding: 5; -fx-font-size: 14; -fx-pref-width: 200;");
+
+    TextField txtUsername = new TextField();
+    txtUsername.setStyle("-fx-padding: 5; -fx-font-size: 14;");
+    txtUsername.setPromptText("Username");
+
+    PasswordField txtPassword = new PasswordField();
+    txtPassword.setStyle("-fx-padding: 5; -fx-font-size: 14;");
+    txtPassword.setPromptText("Password");
+
+    Button btnLogin = new Button("Login");
+    btnLogin.setStyle("-fx-background-color: #4CAF50; -fx-text-fill: white; -fx-font-size: 14;");
+
+    Button btnSignUp = new Button("Sign Up");
+    btnSignUp.setStyle("-fx-background-color: #2196F3; -fx-text-fill: white; -fx-font-size: 14;");
+
+    cbRole.setOnAction(e -> btnSignUp.setVisible("Patient".equals(cbRole.getValue())));
+    btnSignUp.setVisible(false);
+
+    btnLogin.setOnAction(e -> handleLogin(cbRole.getValue(), txtUsername.getText(), txtPassword.getText(), loginStage, primaryStage));
+    btnSignUp.setOnAction(e -> showSignUpScreen());
+
+    VBox layout = new VBox(10, cbRole, txtUsername, txtPassword, btnLogin, btnSignUp);
+    layout.setAlignment(Pos.CENTER);
+    layout.setPadding(new Insets(15, 20, 15, 20));
+    layout.setStyle("-fx-background-color: #F5F5F5;");
+
+    Scene scene = new Scene(layout, 350, 250);
+    loginStage.setScene(scene);
+    loginStage.show();
+}
+
+
+private void showSignUpScreen() {
+    Stage signUpStage = new Stage();
+    signUpStage.setTitle("Patient Sign Up");
+
+    TextField txtUsername = new TextField();
+    txtUsername.setPromptText("Username");
+    PasswordField txtPassword = new PasswordField();
+    txtPassword.setPromptText("Password");
+    Button btnSignUp = new Button("Sign Up");
+
+    btnSignUp.setOnAction(e -> signUpPatient(txtUsername.getText(), txtPassword.getText(), signUpStage));
+
+    VBox layout = new VBox(10, txtUsername, txtPassword, btnSignUp);
+    layout.setAlignment(Pos.CENTER);
+    Scene scene = new Scene(layout, 300, 200);
+    signUpStage.setScene(scene);
+    signUpStage.show();
+}
+
+
+
+
+private void signUpPatient(String username, String password, Stage signUpStage) {
+    if (usernameExists(username)) {
+        showAlert(Alert.AlertType.ERROR, "Error", "Username already exists.");
+        return;
+    }
     
+    writeUserToFile(username, password, "Patient");
+    showAlert(Alert.AlertType.INFORMATION, "Sign Up Successful", "Patient account created successfully.");
+    signUpStage.close(); 
+}
+
+private boolean usernameExists(String username) {
+    String directoryName = "user_data";
+    String fileName = "users.txt";
+    File userFile = new File(directoryName, fileName);
+
+    try (BufferedReader reader = new BufferedReader(new FileReader(userFile))) {
+        String line;
+        while ((line = reader.readLine()) != null) {
+            String[] userData = line.split(",");
+            if (userData[0].equals(username)) {
+                return true;
+            }
+        }
+    } catch (IOException e) {
+        System.out.println("Error checking username: " + e.getMessage());
+    }
+
+    return false;
+}
+private boolean checkCredentials(String username, String password, String role) {
+    String directoryName = "user_data";
+    String fileName = "users.txt";
+    File userFile = new File(directoryName, fileName);
+
+    try (BufferedReader reader = new BufferedReader(new FileReader(userFile))) {
+        String line;
+        while ((line = reader.readLine()) != null) {
+            String[] userData = line.split(",");
+            if (userData[0].equals(username) && userData[1].equals(password) && userData[2].equals(role)) {
+                return true;
+            }
+        }
+    } catch (IOException e) {
+        System.out.println("An error occurred while reading the user file: " + e.getMessage());
+    }
+
+    return false;
+}
+
+private void initializePatientDataDirectory() {
+    String directoryName = "user_data";
+    String fileName = "users.txt";
+    File directory = new File(directoryName);
     
+    if (!directory.exists()) {
+        directory.mkdirs();
+    }
+
+    File userFile = new File(directory, fileName);
+    if (!userFile.exists()) {
+        try {
+            userFile.createNewFile();
+            // Write default credentials for doctors and nurses
+            try (FileWriter fw = new FileWriter(userFile, true);
+                 BufferedWriter bw = new BufferedWriter(fw);
+                 PrintWriter out = new PrintWriter(bw)) {
+
+                // Example credentials
+                out.println("doctor1,password,Doctor");
+                out.println("nurse1,password,Nurse");
+                // Add more as needed
+
+            } catch (IOException e) {
+                System.out.println("An error occurred while writing to the user file: " + e.getMessage());
+            }
+        } catch (IOException e) {
+            System.out.println("An error occurred while creating the user file: " + e.getMessage());
+        }
+    }
+}
+
+private int loginAttemptCount = 0;
+private static final int MAX_LOGIN_ATTEMPTS = 3;
+
+private void handleLogin(String role, String username, String password, Stage loginStage, Stage primaryStage) {
+    if (usernameExists(username) && !checkCredentials(username, password, role)) {
+        showAlert(Alert.AlertType.ERROR, "Error", "Invalid password.");
+        handleLoginAttempt(loginStage);
+        return;
+    }
+
+    if (checkCredentials(username, password, role)) {
+        loginAttemptCount = 0;
+        loginStage.close(); // Close the login window
+        switch (role) {
+            case "Doctor":
+                showDoctorView();
+                break;
+            case "Nurse":
+                showNurseView();
+                break;
+            case "Patient":
+                primaryStage.show();
+                break;
+            default:
+                showAlert(Alert.AlertType.ERROR, "Error", "Please select a role.");
+                break;
+        }
+    }
+        else {
+        	showAlert(Alert.AlertType.ERROR, "Error", "Authentication failed.");
+            handleLoginAttempt(loginStage);
+        }
+   }
+
+private void handleLoginAttempt(Stage loginStage) {
+    loginAttemptCount++;
+    if (loginAttemptCount >= MAX_LOGIN_ATTEMPTS) {
+        showAlert(Alert.AlertType.ERROR, "Error", "Maximum login attempts exceeded.");
+        loginStage.close();
+        System.exit(0); // or any other handling
+    }
+}
 
 
     public static void main(String[] args) {
+    	homeworkOne myApp = new homeworkOne();
+        myApp.initializePatientDataDirectory();
         launch(args);
     }
 }
