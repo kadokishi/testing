@@ -82,7 +82,7 @@ public class homeworkOne extends Application {
         layoutMain.setStyle("-fx-background-color: #f0f0f0;"); // Light grey background
         layoutMain.getChildren().addAll(lblWelcome, btnPatientIntake, btnCTScanTechView, btnPatientView);
 
-        Scene mainScene = new Scene(layoutMain, 400, 300); // Adjust the size as needed
+        Scene mainScene = new Scene(layoutMain, 900, 500); // Adjust the size as needed
         primaryStage.setTitle("Heart Health Imaging and Recording System");
         String examplePatientID = "12345";
         showPatientView(examplePatientID);
