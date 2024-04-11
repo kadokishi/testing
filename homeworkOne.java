@@ -57,18 +57,18 @@ public class homeworkOne extends Application {
 
 
         // Welcome message
-        Label lblWelcome = new Label("Welcome to Heart Health Imaging and Recording System");
+        Label lblWelcome = new Label("Welcome to Clear Health System");
         lblWelcome.setStyle("-fx-font-size: 16px; -fx-text-fill: black;");
 
         // Buttons with inline CSS for styling
-        Button btnPatientIntake = new Button("Patient Intake");
+        Button btnPatientIntake = new Button("Patient's View");
         btnPatientIntake.setStyle("-fx-background-color: #0000FF; -fx-text-fill: white;");
 
 
-        Button btnCTScanTechView = new Button("CT Scan Tech View");
+        Button btnCTScanTechView = new Button("Nurse's View");
         btnCTScanTechView.setStyle("-fx-background-color: #0000FF; -fx-text-fill: white;");
 
-        Button btnPatientView = new Button("Patient View");
+        Button btnPatientView = new Button("Doctor's View");
         btnPatientView.setStyle("-fx-background-color: #0000FF; -fx-text-fill: white;");
 
         // Event Handlers for buttons to navigate to different scenes
@@ -408,20 +408,23 @@ public class homeworkOne extends Application {
         TextField txtLCX = new TextField();
         TextField txtRCA = new TextField();
         TextField txtPDA = new TextField();
+        TextField txtVISIT = new TextField();
 
         // Add all the form fields to the gridPane
-        gridPane.addRow(0, new Label("Patient ID:"), txtPatientID);
-        gridPane.addRow(1, new Label("The total Agatston CAC score:"), txtTotalCACScore);
+
+        gridPane.addRow(1, new Label("Patient Allergies:"), txtTotalCACScore);
         gridPane.add(lblVesselLevelScore, 0, 2, 2, 1); // Span 2 columns
-        gridPane.addRow(3, new Label("LM:"), txtLM);
-        gridPane.addRow(4, new Label("LAD:"), txtLAD);
-        gridPane.addRow(5, new Label("LCX:"), txtLCX);
-        gridPane.addRow(6, new Label("RCA:"), txtRCA);
-        gridPane.addRow(7, new Label("PDA:"), txtPDA);
+        gridPane.addRow(3, new Label("Height:"), txtLM);
+        gridPane.addRow(4, new Label("Weight:"), txtLAD);
+        gridPane.addRow(5, new Label("Body Temperature:"), txtLCX);
+        gridPane.addRow(6, new Label("Blood Pressure:"), txtRCA);
+        gridPane.addRow(7, new Label("Current Medications:"), txtPDA);
+        gridPane.addRow(8, new Label("Notes:"), txtVISIT);
+
 
         Button btnSave = new Button("Save");
         btnSave.setOnAction(e -> {
-            if (isAllFieldsFilled(txtPatientID, txtTotalCACScore, txtLM, txtLAD, txtLCX, txtRCA, txtPDA)) {
+            if (isAllFieldsFilled(txtPatientID, txtTotalCACScore, txtLM, txtLAD, txtLCX, txtRCA, txtPDA, txtVISIT)) {
                 saveCTScanData(txtPatientID.getText(), txtTotalCACScore.getText(),
                         txtLM.getText(), txtLAD.getText(), txtLCX.getText(),
                         txtRCA.getText(), txtPDA.getText());
@@ -430,7 +433,7 @@ public class homeworkOne extends Application {
             }
         });
 
-        gridPane.add(btnSave, 1, 8); // Adjust row index according to your layout
+        gridPane.add(btnSave, 1, 9); // Adjust row index according to your layout
 
         Scene techScene = new Scene(gridPane, 450, 500); // Adjust size as necessary
         techStage.setScene(techScene);
@@ -453,7 +456,7 @@ public class homeworkOne extends Application {
 
         // Construct the content string
         String content = String.format(
-                "Patient ID: %s\nTotal CAC Score: %s\nLM: %s\nLAD: %s\nLCX: %s\nRCA: %s\nPDA: %s\n",
+                "Patient ID: %s\nTotal CAC Score: %s\nLM: %s\nLAD: %s\nLCX: %s\nRCA: %s\nPDA:: %s\nVISIT: %s\n",
                 patientID, totalCACScore, lm, lad, lcx, rca, pda);
 
         try {
@@ -512,6 +515,7 @@ public class homeworkOne extends Application {
                 txtLCX.setText(getValueAfterColon(lines.get(4)));
                 txtRCA.setText(getValueAfterColon(lines.get(5)));
                 txtPDA.setText(getValueAfterColon(lines.get(6)));
+                txtVISIT.setText(getValueAfterColon(lines.get(7)));
             } else {
                 showAlert(Alert.AlertType.INFORMATION, "No Data", "No CT scan data available yet.");
             }
